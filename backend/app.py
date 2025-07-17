@@ -14,6 +14,14 @@ import threading
 import time
 from functools import lru_cache
 
+from weather_utils import (
+    celsius_to_fahrenheit,
+    fahrenheit_to_celsius,
+    dew_point_celsius,
+    clamp,
+    token_matches,
+)
+
 # -------------------------
 # Setup
 # -------------------------
@@ -170,15 +178,15 @@ def get_current_weather():
     temp_c = main.get("temp")
     humidity = main.get("humidity")
     pressure = main.get("pressure", 1013)
-    dew_point_c = temp_c - ((100 - humidity) / 5.0)
+    dew_point_c = dew_point_celsius(temp_c, humidity)
     wind_speed = wind.get("speed", 0.0)
 
     return {
         "pressure": float(pressure),
-        "dew_point_f": (dew_point_c * 9/5) + 32.0,
+        "dew_point_f": celsius_to_fahrenheit(dew_point_c),
         "humidity": float(humidity),
         "wind_speed": float(wind_speed),
-        "temp_f": (temp_c * 9/5) + 32.0,
+        "temp_f": celsius_to_fahrenheit(temp_c),
         "temp_c": float(temp_c)
     }
 
@@ -226,12 +234,12 @@ def predict_from_window_batch(windows_batch):
             pred_wind = float(y0[2]) if y0.size > 2 else 0
             pred_rain = float(y0[3]) if y0.size > 3 else 0
 
-        pred_humidity = min(max(pred_humidity, 0.0), 100.0)
+        pred_humidity = clamp(pred_humidity, 0.0, 100.0)
         pred_wind = max(pred_wind, 0.0)
-        pred_rain_percentage = min(max(pred_rain, 0.0), 1.0) * 100.0
+        pred_rain_percentage = clamp(pred_rain, 0.0, 1.0) * 100.0
         if pred_rain_percentage > 100.0:
             pred_rain_percentage = 100.0
-        pred_temp_c = (pred_temp_f - 32.0) * 5.0 / 9.0
+        pred_temp_c = fahrenheit_to_celsius(pred_temp_f)
 
         results.append((
             {
@@ -360,7 +368,7 @@ def is_admin_authorized():
     if not auth_header.startswith("Bearer "):
         return False
     token = auth_header[len("Bearer "):]
-    return hmac.compare_digest(token, ADMIN_TOKEN)
+    return token_matches(token, ADMIN_TOKEN)
 
 @app.route("/api/admin/verify", methods=["POST"])
 def admin_verify():

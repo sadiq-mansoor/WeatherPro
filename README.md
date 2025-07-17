@@ -1,5 +1,12 @@
 # Weather Forecast App
 
+[![CI](https://github.com/sadiq-mansoor/WeatherPro/actions/workflows/ci.yml/badge.svg)](https://github.com/sadiq-mansoor/WeatherPro/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-000000?logo=flask&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?logo=tensorflow&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+
 A full-stack weather prediction application that combines real-time weather data from OpenWeatherMap with machine learning predictions using an LSTM model to provide accurate forecasts for Peshawar.
 
 ## Data Sources
