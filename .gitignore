@@ -1,0 +1,32 @@
+# Node & React
+frontend/node_modules/
+frontend/build/
+
+# Python & Flask
+backend/__pycache__/
+backend/instance/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+
+# Environment / secrets
+.env
+*.env
+!*.env.example
+
+# Model, data & cache files
+*.h5
+*.keras
+*.pkl
+*.npy
+*.log
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
