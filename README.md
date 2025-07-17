@@ -4,7 +4,7 @@ A full-stack weather prediction application that combines real-time weather data
 
 ## Data Sources
 
-- **Primary sensor data** — collected from the **National Centre of Excellence (NCAI), UET Peshawar**, using the centre's own on-site weather sensors.
+- **Primary sensor data** — collected at the **National Center of Artificial Intelligence (NCAI), UET Peshawar** (hosted under CISNR — the Center for Intelligent Systems and Networks Research), using the centre's own on-site weather sensors.
 - **External / open data** — `OpenDatatemperature-and-rain-trends-peshawar-climate.csv` was obtained from an external open-data source (not NCAI sensors). Supplementary datasets also draw on external sources such as Visual Crossing and Kaggle.
 
 ## Features
@@ -34,8 +34,7 @@ A full-stack weather prediction application that combines real-time weather data
 
 - Python 3.8+
 - Node.js 14+
-- An OpenWeatherMap API key (**required** — get a free one at https://openweathermap.org/api)
-- The trained model artifacts (see [Model artifacts](#model-artifacts-required) below)
+- OpenWeatherMap API Key (**required** — free tier works; get one at https://openweathermap.org/api)
 
 ## Installation
 
@@ -57,14 +56,6 @@ A full-stack weather prediction application that combines real-time weather data
    ```bash
    pip install -r requirements.txt
    ```
-
-4. Configure environment variables:
-   ```bash
-   cp .env.example .env   # then edit .env
-   ```
-   Set `OPENWEATHER_API_KEY` and a strong `ADMIN_TOKEN` (see [Configuration](#configuration)).
-
-5. Add the model artifacts (see [below](#model-artifacts-required)) — the server will not start without them.
 
 ### Frontend Setup
 
@@ -117,20 +108,16 @@ The frontend will start on `http://localhost:3000` and proxy API calls to the ba
 - `GET /debug_predict` - Debug prediction data
 
 ### Admin Endpoints (Require Bearer Token)
+- `POST /api/admin/verify` - Verify an admin token (used by the frontend login)
 - `GET /api/admin/window` - Get current prediction window data
 - `POST /api/admin/update` - Update prediction window data
-- `GET /api/admin/history` - Get prediction history
 
 ## Admin Panel
 
-The admin token is **never checked in the browser** — the frontend sends it to the backend
-(`/api/admin/verify`), which validates it against the `ADMIN_TOKEN` environment variable using a
-constant-time comparison. If `ADMIN_TOKEN` is not set, the admin endpoints are disabled entirely.
-
 To access the admin panel:
-1. On the main page, enter the admin token you configured in `ADMIN_TOKEN`
-2. Click "Login"
-3. Access advanced features like viewing/modifying the prediction window and history
+1. Set the `ADMIN_TOKEN` env var on the backend to a secret value. If it is left unset, all admin endpoints are disabled.
+2. On the main page, enter that token and click "Login". The token is sent to the backend (`POST /api/admin/verify`) and verified server-side with a constant-time comparison — the browser never holds any secret.
+3. Once verified, access advanced features like viewing/modifying the prediction window and history.
 
 ## Configuration
 
@@ -138,34 +125,14 @@ Copy `backend/.env.example` to `backend/.env` and fill in your values (the `.env
 
 ### Environment Variables
 - `OPENWEATHER_API_KEY` (**required**): Your OpenWeatherMap API key — get one at https://openweathermap.org/api
-- `ADMIN_TOKEN` (**required for the admin panel**): Token for the admin endpoints. Use a long random string. If it is left unset, the admin endpoints are disabled and no admin login is possible.
+- `ADMIN_TOKEN` (optional): Secret token for the admin panel. If unset, admin endpoints are disabled entirely. Set it to a strong value to enable admin access.
 
 ### Files
 - `best_lstm.keras`: Trained LSTM model
 - `scaler_X.pkl`, `scaler_y.pkl`: Feature scalers
-- `window.npy`: Current prediction window (30x5 features) — auto-created on first run
-- `history.npy`: Prediction history — auto-created on first run
+- `window.npy`: Current prediction window (30x5 features)
+- `history.npy`: Prediction history
 - `predictions.log`: Application logs
-
-## Model artifacts (required)
-
-The backend serves predictions from a pre-trained LSTM and its fitted scalers. These binary files
-are **not committed to the repository** (they are large and environment-specific), so they must be
-placed in the `backend/` directory before starting the server:
-
-| File | Description |
-|------|-------------|
-| `best_lstm.keras` | Trained LSTM network |
-| `scaler_X.pkl` | Fitted input feature scaler |
-| `scaler_y.pkl` | Fitted target scaler |
-
-The model expects an input window of shape **(30, 5)** — 30 timesteps of 5 features
-(`pressure`, `dew_point_f`, `humidity`, `wind_speed`, `temp_f`) — and predicts temperature,
-humidity, wind speed and rain probability.
-
-If any of these files is missing, `python app.py` exits immediately with a message telling you
-which artifact was not found. Contact the author for the trained weights, or retrain on comparable
-NCAI/UET Peshawar sensor data to reproduce them.
 
 ## Troubleshooting
 
@@ -194,6 +161,24 @@ curl http://localhost:5000/api/forecast
 cd frontend
 npm test
 ```
+
+## Deployment
+
+### Frontend → Vercel
+The React frontend deploys to Vercel as a static site (`vercel.json` at the repo root handles the build).
+
+1. In Vercel, **Import** this GitHub repo and select the **`vercel-deploy`** branch.
+2. Vercel reads `vercel.json` automatically (build: `frontend`, output: `frontend/build`).
+3. Add an environment variable **`REACT_APP_API_URL`** = the URL of your deployed backend
+   (see `frontend/.env.example`). Leave it unset only for local dev, where the CRA proxy is used.
+4. Deploy.
+
+### Backend → not Vercel
+The Flask backend depends on **TensorFlow** and keeps persistent state, so it will **not** run on
+Vercel's serverless functions (250 MB size limit + stateless execution). Host it on a container
+platform instead — **Render**, **Railway**, **Fly.io**, or **Hugging Face Spaces** — then point
+`REACT_APP_API_URL` at that deployment. The backend also needs its model files
+(`best_lstm.keras`, `scaler_X.pkl`, `scaler_y.pkl`) present at runtime.
 
 ## Contributing
 
