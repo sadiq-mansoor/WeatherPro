@@ -11,6 +11,7 @@ __pycache__/
 *.pyd
 venv/
 .venv/
+.pytest_cache/
 
 # Environment / secrets
 .env
