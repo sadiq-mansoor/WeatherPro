@@ -34,7 +34,7 @@ A full-stack weather prediction application that combines real-time weather data
 
 - Python 3.8+
 - Node.js 14+
-- OpenWeatherMap API Key (optional, default key provided)
+- OpenWeatherMap API Key (**required** — free tier works; get one at https://openweathermap.org/api)
 
 ## Installation
 
@@ -108,16 +108,16 @@ The frontend will start on `http://localhost:3000` and proxy API calls to the ba
 - `GET /debug_predict` - Debug prediction data
 
 ### Admin Endpoints (Require Bearer Token)
+- `POST /api/admin/verify` - Verify an admin token (used by the frontend login)
 - `GET /api/admin/window` - Get current prediction window data
 - `POST /api/admin/update` - Update prediction window data
-- `GET /api/admin/history` - Get prediction history
 
 ## Admin Panel
 
 To access the admin panel:
-1. On the main page, enter the admin token (set via the `ADMIN_TOKEN` env var; defaults to `admin123` for local dev only)
-2. Click "Login"
-3. Access advanced features like viewing/modifying the prediction window and history
+1. Set the `ADMIN_TOKEN` env var on the backend to a secret value. If it is left unset, all admin endpoints are disabled.
+2. On the main page, enter that token and click "Login". The token is sent to the backend (`POST /api/admin/verify`) and verified server-side with a constant-time comparison — the browser never holds any secret.
+3. Once verified, access advanced features like viewing/modifying the prediction window and history.
 
 ## Configuration
 
@@ -125,7 +125,7 @@ Copy `backend/.env.example` to `backend/.env` and fill in your values (the `.env
 
 ### Environment Variables
 - `OPENWEATHER_API_KEY` (**required**): Your OpenWeatherMap API key — get one at https://openweathermap.org/api
-- `ADMIN_TOKEN`: Token for the admin panel. **Change this from the default before deploying.**
+- `ADMIN_TOKEN` (optional): Secret token for the admin panel. If unset, admin endpoints are disabled entirely. Set it to a strong value to enable admin access.
 
 ### Files
 - `best_lstm.keras`: Trained LSTM model
@@ -161,6 +161,24 @@ curl http://localhost:5000/api/forecast
 cd frontend
 npm test
 ```
+
+## Deployment
+
+### Frontend → Vercel
+The React frontend deploys to Vercel as a static site (`vercel.json` at the repo root handles the build).
+
+1. In Vercel, **Import** this GitHub repo and select the **`vercel-deploy`** branch.
+2. Vercel reads `vercel.json` automatically (build: `frontend`, output: `frontend/build`).
+3. Add an environment variable **`REACT_APP_API_URL`** = the URL of your deployed backend
+   (see `frontend/.env.example`). Leave it unset only for local dev, where the CRA proxy is used.
+4. Deploy.
+
+### Backend → not Vercel
+The Flask backend depends on **TensorFlow** and keeps persistent state, so it will **not** run on
+Vercel's serverless functions (250 MB size limit + stateless execution). Host it on a container
+platform instead — **Render**, **Railway**, **Fly.io**, or **Hugging Face Spaces** — then point
+`REACT_APP_API_URL` at that deployment. The backend also needs its model files
+(`best_lstm.keras`, `scaler_X.pkl`, `scaler_y.pkl`) present at runtime.
 
 ## Contributing
 

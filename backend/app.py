@@ -5,6 +5,8 @@ import numpy as np
 import joblib
 import tensorflow as tf
 import os
+import sys
+import hmac
 import warnings
 from datetime import datetime, timedelta
 import logging
@@ -39,7 +41,8 @@ SCALER_Y_PATH = "scaler_y.pkl"
 WINDOW_FILE = "window.npy"
 HISTORY_FILE = "history.npy"
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "admin123")  # override via env in production
+# Read from env only. If unset, all admin endpoints are disabled (no insecure default).
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
 CITY = "peshawar"
 BASE_URL = "http://api.openweathermap.org/data/2.5"
 
@@ -78,6 +81,19 @@ def safe_load_scaler(path):
     except Exception as e:
         logging.exception(f"Failed to load scaler at {path}: {e}")
         raise
+
+# Fail fast with a clear message if a required artifact is missing, instead of
+# crashing mid-load with an opaque stack trace.
+_required_artifacts = {
+    MODEL_PATH: "trained LSTM model",
+    SCALER_X_PATH: "input feature scaler",
+    SCALER_Y_PATH: "output target scaler",
+}
+_missing = [f"{path} ({desc})" for path, desc in _required_artifacts.items() if not os.path.exists(path)]
+if _missing:
+    logging.error("Missing required model artifact(s): " + "; ".join(_missing))
+    logging.error("Place these files in the backend directory. See README.md → 'Model artifacts'.")
+    sys.exit(1)
 
 model = safe_load_model(MODEL_PATH)
 scaler_X = safe_load_scaler(SCALER_X_PATH)
@@ -335,16 +351,26 @@ def health_check():
 # RUN APP
 # -------------------------
 
-from flask import request
+def is_admin_authorized():
+    """Constant-time Bearer-token check. Returns False if ADMIN_TOKEN is unset
+    (admin endpoints disabled) or the presented token does not match."""
+    if not ADMIN_TOKEN:
+        return False
+    auth_header = request.headers.get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return False
+    token = auth_header[len("Bearer "):]
+    return hmac.compare_digest(token, ADMIN_TOKEN)
+
+@app.route("/api/admin/verify", methods=["POST"])
+def admin_verify():
+    if not is_admin_authorized():
+        return jsonify({"error": "Unauthorized"}), 401
+    return jsonify({"authorized": True})
 
 @app.route("/api/admin/window", methods=["GET"])
 def admin_get_window():
-    auth_header = request.headers.get("Authorization", "")
-    print(f"Authorization header received in /api/admin/window: {auth_header}")
-    if not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
-    token = auth_header.split(" ")[1]
-    if token != ADMIN_TOKEN:
+    if not is_admin_authorized():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
@@ -356,11 +382,7 @@ def admin_get_window():
 
 @app.route("/api/admin/update", methods=["POST"])
 def admin_update_window():
-    auth_header = request.headers.get("Authorization", "")
-    if not auth_header.startswith("Bearer "):
-        return jsonify({"error": "Unauthorized"}), 401
-    token = auth_header.split(" ")[1]
-    if token != ADMIN_TOKEN:
+    if not is_admin_authorized():
         return jsonify({"error": "Unauthorized"}), 401
 
     try:
