@@ -56,12 +56,20 @@ function App() {
     }
   };
 
-  const handleAdminLogin = () => {
-    if (adminToken === 'admin123') {
-      setIsAdmin(true);
-      setLoginError('');
-    } else {
-      setLoginError('Invalid admin token');
+  const handleAdminLogin = async () => {
+    setLoginError('');
+    try {
+      // The backend is the source of truth — never compare the token in the browser.
+      const response = await fetch('/api/admin/verify', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (response.ok) {
+        setIsAdmin(true);
+      } else {
+        setLoginError('Invalid admin token');
+      }
+    } catch (error) {
+      setLoginError('Could not reach the server. Please try again.');
     }
   };
 
