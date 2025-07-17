@@ -4,7 +4,7 @@ A full-stack weather prediction application that combines real-time weather data
 
 ## Data Sources
 
-- **Primary sensor data** — collected from the **National Centre of Excellence (NCAI), UET Peshawar**, using the centre's own on-site weather sensors.
+- **Primary sensor data** — collected at the **National Center of Artificial Intelligence (NCAI), UET Peshawar** (hosted under CISNR — the Center for Intelligent Systems and Networks Research), using the centre's own on-site weather sensors.
 - **External / open data** — `OpenDatatemperature-and-rain-trends-peshawar-climate.csv` was obtained from an external open-data source (not NCAI sensors). Supplementary datasets also draw on external sources such as Visual Crossing and Kaggle.
 
 ## Features
