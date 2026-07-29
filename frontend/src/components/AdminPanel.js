@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import API_BASE from '../config';
 
 const AdminPanel = ({ adminToken }) => {
   const [windowData, setWindowData] = useState(null);
@@ -6,7 +7,7 @@ const AdminPanel = ({ adminToken }) => {
 
   const fetchWindowData = async () => {
     try {
-      const response = await fetch('/api/admin/window', {
+      const response = await fetch(`${API_BASE}/api/admin/window`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`
         }
@@ -25,7 +26,7 @@ const AdminPanel = ({ adminToken }) => {
 
   const handleWindowUpdate = async () => {
     try {
-      const response = await fetch('/api/admin/update', {
+      const response = await fetch(`${API_BASE}/api/admin/update`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

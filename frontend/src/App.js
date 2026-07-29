@@ -4,6 +4,7 @@ import CurrentWeather from './components/CurrentWeather';
 import Forecast from './components/Forecast';
 import SimpleFeatureDisplay from './components/SimpleFeatureDisplay';
 import AdminPanel from './components/AdminPanel';
+import API_BASE from './config';
 
 function App() {
   const [currentWeather, setCurrentWeather] = useState(null);
@@ -27,7 +28,7 @@ function App() {
 
   const fetchCurrentWeather = async () => {
     try {
-      const response = await fetch('/api/current');
+      const response = await fetch(`${API_BASE}/api/current`);
       const data = await response.json();
       setCurrentWeather(data);
     } catch (error) {
@@ -37,7 +38,7 @@ function App() {
 
   const fetchForecast = async () => {
     try {
-      const response = await fetch('/api/forecast');
+      const response = await fetch(`${API_BASE}/api/forecast`);
       const data = await response.json();
       if (data.forecast && Array.isArray(data.forecast)) {
         const mappedForecast = data.forecast.map(item => ({
@@ -56,12 +57,20 @@ function App() {
     }
   };
 
-  const handleAdminLogin = () => {
-    if (adminToken === 'admin123') {
-      setIsAdmin(true);
-      setLoginError('');
-    } else {
-      setLoginError('Invalid admin token');
+  const handleAdminLogin = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/verify`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      if (response.ok) {
+        setIsAdmin(true);
+        setLoginError('');
+      } else {
+        setLoginError('Invalid admin token');
+      }
+    } catch (error) {
+      setLoginError('Could not reach server: ' + error.message);
     }
   };
 
