@@ -34,7 +34,8 @@ A full-stack weather prediction application that combines real-time weather data
 
 - Python 3.8+
 - Node.js 14+
-- OpenWeatherMap API Key (optional, default key provided)
+- An OpenWeatherMap API key (**required** — get a free one at https://openweathermap.org/api)
+- The trained model artifacts (see [Model artifacts](#model-artifacts-required) below)
 
 ## Installation
 
@@ -56,6 +57,14 @@ A full-stack weather prediction application that combines real-time weather data
    ```bash
    pip install -r requirements.txt
    ```
+
+4. Configure environment variables:
+   ```bash
+   cp .env.example .env   # then edit .env
+   ```
+   Set `OPENWEATHER_API_KEY` and a strong `ADMIN_TOKEN` (see [Configuration](#configuration)).
+
+5. Add the model artifacts (see [below](#model-artifacts-required)) — the server will not start without them.
 
 ### Frontend Setup
 
@@ -114,8 +123,12 @@ The frontend will start on `http://localhost:3000` and proxy API calls to the ba
 
 ## Admin Panel
 
+The admin token is **never checked in the browser** — the frontend sends it to the backend
+(`/api/admin/verify`), which validates it against the `ADMIN_TOKEN` environment variable using a
+constant-time comparison. If `ADMIN_TOKEN` is not set, the admin endpoints are disabled entirely.
+
 To access the admin panel:
-1. On the main page, enter the admin token (set via the `ADMIN_TOKEN` env var; defaults to `admin123` for local dev only)
+1. On the main page, enter the admin token you configured in `ADMIN_TOKEN`
 2. Click "Login"
 3. Access advanced features like viewing/modifying the prediction window and history
 
@@ -125,14 +138,34 @@ Copy `backend/.env.example` to `backend/.env` and fill in your values (the `.env
 
 ### Environment Variables
 - `OPENWEATHER_API_KEY` (**required**): Your OpenWeatherMap API key — get one at https://openweathermap.org/api
-- `ADMIN_TOKEN`: Token for the admin panel. **Change this from the default before deploying.**
+- `ADMIN_TOKEN` (**required for the admin panel**): Token for the admin endpoints. Use a long random string. If it is left unset, the admin endpoints are disabled and no admin login is possible.
 
 ### Files
 - `best_lstm.keras`: Trained LSTM model
 - `scaler_X.pkl`, `scaler_y.pkl`: Feature scalers
-- `window.npy`: Current prediction window (30x5 features)
-- `history.npy`: Prediction history
+- `window.npy`: Current prediction window (30x5 features) — auto-created on first run
+- `history.npy`: Prediction history — auto-created on first run
 - `predictions.log`: Application logs
+
+## Model artifacts (required)
+
+The backend serves predictions from a pre-trained LSTM and its fitted scalers. These binary files
+are **not committed to the repository** (they are large and environment-specific), so they must be
+placed in the `backend/` directory before starting the server:
+
+| File | Description |
+|------|-------------|
+| `best_lstm.keras` | Trained LSTM network |
+| `scaler_X.pkl` | Fitted input feature scaler |
+| `scaler_y.pkl` | Fitted target scaler |
+
+The model expects an input window of shape **(30, 5)** — 30 timesteps of 5 features
+(`pressure`, `dew_point_f`, `humidity`, `wind_speed`, `temp_f`) — and predicts temperature,
+humidity, wind speed and rain probability.
+
+If any of these files is missing, `python app.py` exits immediately with a message telling you
+which artifact was not found. Contact the author for the trained weights, or retrain on comparable
+NCAI/UET Peshawar sensor data to reproduce them.
 
 ## Troubleshooting
 
