@@ -30,12 +30,51 @@ Split sizes: train 3,549 · val 737 · test 738 windows.
 
 Overall MAE improved by **2.8%**, with a lower error on every target.
 
-## What changed vs. the baseline
+## Comparison against forecasting baselines
+
+The number that matters: does the model beat the naive baselines every weather
+forecast is judged against? Same test set, same targets.
+
+| Model | temp_f | humidity | wind | precip | overall MAE |
+|-------|-------:|---------:|-----:|-------:|------------:|
+| **LSTM (improved)** | **1.670** | **5.340** | **1.886** | **1.537** | **2.608** |
+| Persistence (tomorrow = today) | 1.898 | 6.509 | 2.451 | 2.058 | 3.229 |
+| Climatology (monthly average) | 4.003 | 10.488 | 2.108 | 2.268 | 4.717 |
+
+The LSTM beats persistence on **every** target (~19% lower overall MAE) and is
+well ahead of climatology, so it is genuinely adding forecast value.
+
+## Precipitation as a rain / no-rain event (threshold 1 mm)
+
+Plain MAE flatters any model in a dry climate, so precip is also scored as a
+binary rain event. POD = probability of detection, FAR = false-alarm ratio,
+CSI = critical success index.
+
+| Model | POD | FAR | CSI | Accuracy |
+|-------|----:|----:|----:|---------:|
+| LSTM (improved) | 0.400 | 0.365 | 0.325 | 0.848 |
+| Persistence | 0.496 | 0.504 | 0.330 | 0.816 |
+
+Rain is the honest weak spot: the LSTM and persistence are **effectively tied on
+CSI**. The LSTM detects fewer rain days but raises far fewer false alarms and is
+more accurate overall. Precipitation timing at daily resolution is hard for any
+single-station model and would be the main target for future work.
+
+Reproduce this comparison with `python evaluate_baselines.py` (from `backend/`).
+
+## What changed vs. the earlier LSTM
 
 - **Fixed data leakage** — the earlier pipeline fit the scalers on the whole
   dataset before splitting. Scalers are now fit on the training split only.
 - **Objective aligned with the metric** — the improved model trains against MAE
   (what we report) instead of MSE, with lighter dropout and gradient clipping.
 
-The `improved` model is only kept when it beats the `baseline` on the test set;
+The improved model is only kept when it beats the MSE model on the test set;
 otherwise `train_lstm.py` leaves the existing artifacts untouched.
+
+## Known limitations / future work
+
+Single training run per model (no multi-seed mean±std yet), single weather
+station, and precipitation is the weakest target. A publication-grade write-up
+would add seeded repeats with variance, statistical significance tests, and a
+non-LSTM baseline (e.g. gradient boosting).
