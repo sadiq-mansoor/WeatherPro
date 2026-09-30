@@ -1,6 +1,10 @@
 # Node & React
 frontend/node_modules/
 frontend/build/
+data/synthetic/
+data/live/
+data/raw/
+backend/artifacts/
 
 # Python & Flask
 backend/__pycache__/
@@ -24,6 +28,12 @@ venv/
 *.pkl
 *.npy
 *.log
+
+# The inference artifacts are required for a deployment and are small enough
+# to version with the application. Runtime state remains ignored.
+!backend/best_lstm.keras
+!backend/scaler_X.pkl
+!backend/scaler_y.pkl
 
 # OS & IDE
 .DS_Store

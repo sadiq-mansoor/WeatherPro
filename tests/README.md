@@ -8,7 +8,7 @@ reproducibility.
 
 | File | What it checks |
 |------|----------------|
-| `test_api.py` | Public endpoints (`/`, `/health`, `/api/current`, `/api/forecast`, `/debug_predict`), including behaviour when the upstream weather API is unavailable |
+| `test_api.py` | Public endpoints and the protected `/debug_predict` endpoint, including behaviour when the upstream weather API is unavailable |
 | `test_admin_auth.py` | Bearer-token auth on `/api/admin/*`, and that admin is fully disabled when `ADMIN_TOKEN` is unset |
 | `test_model_contract.py` | Model I/O shape `(30, 5) -> 4` and matching scaler feature counts |
 | `test_reproducibility.py` | Deterministic inference, physical output ranges, batch/single agreement, pinned training seed |
@@ -17,11 +17,12 @@ reproducibility.
 
 ## Running
 
-From this directory:
+From the repository root:
 
 ```bash
-pip install -r requirements-test.txt
-pytest
+python -m pip install -r backend/requirements.txt
+python -m pip install -r tests/requirements-test.txt
+python -m pytest -q tests
 ```
 
 The tests import the backend app, which loads `best_lstm.keras` and the scalers,

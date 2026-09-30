@@ -1,14 +1,22 @@
 import React from 'react';
 
+/**
+ * Renders a 7-day forecast grid.
+ * Each card shows day label, temperature, humidity, wind speed, and rain probability.
+ */
 function Forecast({ data }) {
-  // Ensure data is an array before mapping
-  if (!Array.isArray(data)) {
-    return <p>Loading forecast data...</p>;
+  if (!Array.isArray(data) || data.length === 0) {
+    return (
+      <section className="forecast">
+        <h2>7-Day Forecast</h2>
+        <p className="loading-text">Loading forecast…</p>
+      </section>
+    );
   }
 
   return (
-    <div className="forecast">
-      <h2>5-Day Forecast</h2>
+    <section className="forecast">
+      <h2>7-Day Forecast</h2>
       <div className="forecast-cards">
         {data.map((day, index) => (
           <div className="forecast-card" key={index}>
@@ -20,7 +28,7 @@ function Forecast({ data }) {
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
