@@ -13,6 +13,7 @@ model that just predicts "no rain".
 Run from backend/ after training:  python evaluate_baselines.py
 """
 import os
+from pathlib import Path
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
@@ -25,12 +26,15 @@ from sklearn.metrics import mean_absolute_error
 
 import train_lstm as T
 
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_PATH = Path(os.environ.get("MODEL_PATH", str(BASE_DIR / "best_lstm.keras")))
+
 RAIN_THRESHOLD_MM = 1.0
 
 
 def aligned_references():
     """Truth, persistence and monthly-climatology forecasts for exactly the
-    test rows the LSTM predicts (global rows [test_start + WINDOW : end])."""
+    test rows the LSTM predicts (global rows [test_start : end])."""
     df = T.load_frame()
     Y = df[T.TARGET_FEATURES].values.astype(float)  # physical units, precip in mm
     months = df["date"].dt.month.values
@@ -38,7 +42,9 @@ def aligned_references():
     n = len(df)
     n_tr, n_va = int(0.70 * n), int(0.15 * n)
     test_start = n_tr + n_va
-    g = np.arange(test_start + T.WINDOW, n)
+    # T.prepare() evaluates every target date in the held-out test period.
+    # Each target uses the preceding 30 observed rows as context.
+    g = np.arange(test_start, n)
 
     truth = Y[g]
     persistence = Y[g - 1]
@@ -55,7 +61,7 @@ def aligned_references():
 
 def lstm_predictions():
     data, _, scaler_y = T.prepare()
-    model = tf.keras.models.load_model("best_lstm.keras", compile=False)
+    model = tf.keras.models.load_model(MODEL_PATH, compile=False)
     Xte, yte = data["test"]
     hat = scaler_y.inverse_transform(model.predict(Xte, verbose=0)).copy()
     truth = scaler_y.inverse_transform(yte).copy()

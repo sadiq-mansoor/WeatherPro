@@ -1,6 +1,9 @@
-flask
-flask-cors
-numpy
-joblib
-tensorflow
-requests
+flask==3.0.3
+flask-cors==4.0.1
+numpy==1.26.4
+joblib==1.4.2
+tensorflow==2.17.0
+requests==2.32.3
+pandas==2.2.2
+scikit-learn==1.5.1
+gunicorn==22.0.0

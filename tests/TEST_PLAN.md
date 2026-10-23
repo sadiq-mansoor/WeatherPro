@@ -14,7 +14,7 @@ the LSTM prediction pipeline. Frontend is validated manually (see checklist).
 | API-03 | Current | `GET /api/current` with live data | Prediction with all 5 fields | yes |
 | API-04 | Current | `GET /api/current` when weather API is down | Still 200, predicts from last window | yes |
 | API-05 | Forecast | `GET /api/forecast` | 7 dated forecast entries | yes |
-| API-06 | Debug | `GET /debug_predict` | Raw + inverse-transformed output present | yes |
+| API-06 | Debug | `GET /debug_predict` with admin token | Raw + inverse-transformed output present; unauthenticated request rejected | yes |
 | SEC-01 | Admin | `/api/admin/verify` with no token | 401 | yes |
 | SEC-02 | Admin | `/api/admin/verify` with wrong token | 401 | yes |
 | SEC-03 | Admin | `/api/admin/verify` with correct token | 200 | yes |
@@ -39,4 +39,4 @@ the LSTM prediction pipeline. Frontend is validated manually (see checklist).
 
 - Python 3.11, TensorFlow 2.x, Flask.
 - Model artifacts present in `backend/`.
-- Run: `pytest` from `Test(QA)/`.
+- Run: `python -m pytest -q tests` from the repository root.

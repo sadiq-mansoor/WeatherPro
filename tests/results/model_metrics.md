@@ -1,4 +1,11 @@
-# Model results
+# Legacy model results
+
+> These numbers belong to the previous training protocol and are retained for
+> historical comparison only. The pipeline now uses preceding observed context
+> for validation/test targets and selects the saved model by validation MAE
+> instead of test MAE. Rerun `backend/train_lstm.py` and
+> `backend/evaluate_baselines.py` with the approved dataset before publishing
+> new performance claims.
 
 Held-out test metrics for the next-day forecast model. The split is
 chronological (70% train / 15% val / 15% test) and the run is seeded
@@ -69,8 +76,9 @@ Reproduce this comparison with `python evaluate_baselines.py` (from `backend/`).
 - **Objective aligned with the metric** — the improved model trains against MAE
   (what we report) instead of MSE, with lighter dropout and gradient clipping.
 
-The improved model is only kept when it beats the MSE model on the test set;
-otherwise `train_lstm.py` leaves the existing artifacts untouched.
+The current pipeline selects between candidates using validation MAE. The test
+set is used only once for the final report and never determines which model is
+saved.
 
 ## Known limitations / future work
 

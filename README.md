@@ -1,196 +1,154 @@
-# Weather Forecast App
+# Peshawar Weather Forecast
 
-[![CI](https://github.com/sadiq-mansoor/WeatherPro/actions/workflows/ci.yml/badge.svg)](https://github.com/sadiq-mansoor/WeatherPro/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)
-![Flask](https://img.shields.io/badge/Flask-000000?logo=flask&logoColor=white)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?logo=tensorflow&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)
+An LSTM based weather forecasting service for Peshawar, Pakistan. The project
+contains a Flask API, a React web app, model artifacts, training code, tests,
+and deployment configuration.
 
-A full-stack weather prediction application that combines real-time weather data from OpenWeatherMap with machine learning predictions using an LSTM model to provide accurate forecasts for Peshawar.
+## Current status
 
-## Data Sources
+The local backend inference path is implemented and covered by 30 automated
+tests. The frontend source and production build configuration are present.
+Live deployment still requires hosting accounts, environment variables, and a
+deployment run; no live URL is claimed by this repository.
 
-- **Primary sensor data** — collected at the **National Center of Artificial Intelligence (NCAI), UET Peshawar** (hosted under CISNR — the Center for Intelligent Systems and Networks Research), using the centre's own on-site weather sensors.
-- **External / open data** — `OpenDatatemperature-and-rain-trends-peshawar-climate.csv` was obtained from an external open-data source (not NCAI sensors). Supplementary datasets also draw on external sources such as Visual Crossing and Kaggle.
+## Repository layout
 
-## Features
+```text
+api/           Vercel Python Function entrypoint for the Flask API
+backend/       Flask API, training/evaluation scripts, inference artifacts
+frontend/      React single-page application
+data/          Dataset instructions; large source files stay outside Git
+docs/          API, model, deployment, and contribution guides
+tests/         Backend tests and reference evaluation results
+render.yaml    Render web-service configuration
+vercel.json    Vercel frontend configuration
+```
 
-- **Real-time Weather Data**: Fetches current weather conditions from OpenWeatherMap API
-- **7-Day Forecast**: Provides weather predictions for the next 7 days using LSTM neural network
-- **Interactive Frontend**: React-based UI with charts and visualizations
-- **Admin Panel**: Secure admin interface for managing prediction windows and viewing history
-- **Caching**: Optimized performance with weather data caching and model pre-compilation
-- **Logging**: Comprehensive logging for predictions and API calls
-
-## Tech Stack
+## Local setup
 
 ### Backend
-- **Flask**: Web framework for API endpoints
-- **TensorFlow/Keras**: LSTM model for weather predictions
-- **NumPy**: Numerical computations
-- **Joblib**: Model and scaler serialization
-- **Requests**: HTTP client for OpenWeatherMap API
+
+Requirements: Python 3.11 and an OpenWeatherMap API key.
+
+```powershell
+cd backend
+python -m venv .venv
+.\\.venv\\Scripts\\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+Copy-Item .env.example .env
+# Edit .env and set OPENWEATHER_API_KEY.
+python app.py
+```
+
+The API starts at `http://localhost:5000`. The checked-in model artifacts are
+loaded automatically. If they are missing, the API stops with a clear error.
 
 ### Frontend
-- **React**: User interface framework
-- **Chart.js**: Data visualization library
-- **CSS**: Styling
 
-## Prerequisites
+```powershell
+cd frontend
+npm ci
+npm start
+```
 
-- Python 3.8+
-- Node.js 14+
-- OpenWeatherMap API Key (**required** — free tier works; get one at https://openweathermap.org/api)
-
-## Installation
-
-### Backend Setup
-
-1. Navigate to the backend directory:
-   ```bash
-   cd backend
-   ```
-
-2. Create a virtual environment (recommended):
-   ```bash
-   python -m venv venv
-   venv\Scripts\activate  # On Windows
-   # source venv/bin/activate  # On macOS/Linux
-   ```
-
-3. Install Python dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-
-2. Install Node.js dependencies:
-   ```bash
-   npm install
-   ```
-
-## Running the Application
-
-### Start the Backend
-
-1. Ensure you're in the backend directory and virtual environment is activated
-2. Run the Flask server:
-   ```bash
-   python app.py
-   ```
-
-The backend will start on `http://localhost:5000`
-
-### Start the Frontend
-
-1. Open a new terminal and navigate to the frontend directory
-2. Start the React development server:
-   ```bash
-   npm start
-   ```
-
-The frontend will start on `http://localhost:3000` and proxy API calls to the backend.
-
-### Access the Application
-
-- **Main Application**: http://localhost:3000
-- **Backend API Home**: http://localhost:5000
-- **Current Weather API**: http://localhost:5000/api/current
-- **Forecast API**: http://localhost:5000/api/forecast
-
-## API Endpoints
-
-### Public Endpoints
-- `GET /` - API status and available endpoints
-- `GET /api/current` - Current weather prediction
-- `GET /api/forecast` - 7-day weather forecast
-- `GET /health` - Health check endpoint
-- `GET /debug_predict` - Debug prediction data
-
-### Admin Endpoints (Require Bearer Token)
-- `POST /api/admin/verify` - Verify an admin token (used by the frontend login)
-- `GET /api/admin/window` - Get current prediction window data
-- `POST /api/admin/update` - Update prediction window data
-
-## Admin Panel
-
-To access the admin panel:
-1. Set the `ADMIN_TOKEN` env var on the backend to a secret value. If it is left unset, all admin endpoints are disabled.
-2. On the main page, enter that token and click "Login". The token is sent to the backend (`POST /api/admin/verify`) and verified server-side with a constant-time comparison — the browser never holds any secret.
-3. Once verified, access advanced features like viewing/modifying the prediction window and history.
+The web app starts at `http://localhost:3000` and proxies API requests to the
+local backend. For a single-project Vercel deployment, leave
+`REACT_APP_API_URL` empty so the browser uses the same-origin serverless API.
+Set it only when the backend is deployed separately.
 
 ## Configuration
 
-Copy `backend/.env.example` to `backend/.env` and fill in your values (the `.env` file is git-ignored).
+Backend variables are documented in [backend/.env.example](backend/.env.example).
+The important variables are:
 
-### Environment Variables
-- `OPENWEATHER_API_KEY` (**required**): Your OpenWeatherMap API key — get one at https://openweathermap.org/api
-- `ADMIN_TOKEN` (optional): Secret token for the admin panel. If unset, admin endpoints are disabled entirely. Set it to a strong value to enable admin access.
+| Variable                                             |             Required | Purpose                            |
+| ---------------------------------------------------- | -------------------: | ---------------------------------- |
+| `OPENWEATHER_API_KEY`                              | Yes for live weather | OpenWeatherMap API key             |
+| `ADMIN_TOKEN`                                      |                   No | Enables protected admin operations |
+| `CORS_ORIGINS`                                     |           Production | Comma-separated frontend origins   |
+| `WEATHER_DATA_DIR`                                 |                   No | Runtime state and logs directory   |
+| `MODEL_PATH`, `SCALER_X_PATH`, `SCALER_Y_PATH` |                   No | Override artifact locations        |
 
-### Files
-- `best_lstm.keras`: Trained LSTM model
-- `scaler_X.pkl`, `scaler_y.pkl`: Feature scalers
-- `window.npy`: Current prediction window (30x5 features)
-- `history.npy`: Prediction history
-- `predictions.log`: Application logs
+Leave `ADMIN_TOKEN` empty to keep admin operations disabled. Set
+`CORS_ORIGINS` to the exact frontend origin in production.
 
-## Troubleshooting
+## API
 
-### Common Issues
+See [docs/api-reference.md](docs/api-reference.md). The main endpoints are:
 
-1. **Model Loading Errors**: Ensure all model files (`best_lstm.keras`, scalers) are present in the backend directory
-2. **API Key Issues**: Check your OpenWeatherMap API key if using a custom one
-3. **Port Conflicts**: Ensure ports 3000 and 5000 are available
-4. **CORS Errors**: The backend has CORS enabled for frontend communication
+| Method   | Endpoint               | Access                    |
+| -------- | ---------------------- | ------------------------- |
+| GET      | `/health`            | Public readiness check    |
+| GET      | `/api/current`       | Public current prediction |
+| GET      | `/api/forecast`      | Public seven-day forecast |
+| POST     | `/api/admin/verify`  | Admin token required      |
+| GET/POST | `/api/admin/window`  | Admin token required      |
+| GET      | `/api/admin/history` | Admin token required      |
+| GET      | `/debug_predict`     | Admin token required      |
 
-### Logs
-Check `backend/predictions.log` for detailed error information.
+The model predicts temperature, humidity, wind speed, and precipitation. The
+API exposes precipitation as a bounded rain-probability display value for the
+existing UI; it is a proxy, not a calibrated probability.
 
-## Development
+## Training and evaluation
 
-### Backend Testing
-```bash
-# Test individual endpoints
-curl http://localhost:5000/
-curl http://localhost:5000/api/current
-curl http://localhost:5000/api/forecast
+Training data is not committed because of its size and source licensing. Read
+[data/README.md](data/README.md) before training. The expected CSV path is:
+
+```text
+data/raw/peshawar_weather_2000_2024.csv
 ```
 
-### Frontend Testing
-```bash
-cd frontend
-npm test
+Then run:
+
+```powershell
+cd backend
+python audit_dataset.py
+python train_lstm.py
+python evaluate_baselines.py
 ```
+
+The training script validates the file and required columns before doing any
+work. It fits scalers on the training split only and writes artifacts into
+`backend/`.
+
+Legacy reference metrics are recorded in
+[tests/results/model_metrics.md](tests/results/model_metrics.md). They must be
+regenerated with the approved dataset after any pipeline change before being
+used as current performance claims.
+
+## Testing
+
+```powershell
+python -m pip install -r backend/requirements.txt
+python -m pip install -r tests/requirements-test.txt
+python -m pytest -q tests
+```
+
+The CI workflow runs the backend tests and the frontend production build:
+[.github/workflows/test.yml](.github/workflows/test.yml).
 
 ## Deployment
 
-### Frontend → Vercel
-The React frontend deploys to Vercel as a static site (`vercel.json` at the repo root handles the build).
+- Vercel: import the repository root, use the checked-in `vercel.json`, and
+  set the serverless API secrets documented in [docs/deployment.md](docs/deployment.md).
+- Render: use the checked-in `render.yaml`, then set the secret values in the
+  Render dashboard.
 
-1. In Vercel, **Import** this GitHub repo and select the **`vercel-deploy`** branch.
-2. Vercel reads `vercel.json` automatically (build: `frontend`, output: `frontend/build`).
-3. Add an environment variable **`REACT_APP_API_URL`** = the URL of your deployed backend
-   (see `frontend/.env.example`). Leave it unset only for local dev, where the CRA proxy is used.
-4. Deploy.
+Read [docs/deployment.md](docs/deployment.md) for the complete checklist and
+post-deployment verification commands.
 
-### Backend → not Vercel
-The Flask backend depends on **TensorFlow** and keeps persistent state, so it will **not** run on
-Vercel's serverless functions (250 MB size limit + stateless execution). Host it on a container
-platform instead — **Render**, **Railway**, **Fly.io**, or **Hugging Face Spaces** — then point
-`REACT_APP_API_URL` at that deployment. The backend also needs its model files
-(`best_lstm.keras`, `scaler_X.pkl`, `scaler_y.pkl`) present at runtime.
+## Limitations
 
-## Contributing
+- The model is trained for Peshawar and should not be presented as a general
+  weather model.
+- Rain output is the weakest model target and is not a calibrated probability.
+- Runtime state is file-backed and should use persistent storage for a hosted
+  service.
+- Model metrics are from the documented evaluation run and require the source
+  dataset to reproduce.
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+## License
+
+MIT. See [LICENSE](LICENSE).
