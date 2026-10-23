@@ -20,6 +20,14 @@ import time
 import tempfile
 from pathlib import Path
 
+from weather_utils import (
+    celsius_to_fahrenheit,
+    fahrenheit_to_celsius,
+    dew_point_celsius,
+    clamp,
+    token_matches,
+)
+
 # -------------------------
 # Environment & logging
 # -------------------------
@@ -301,7 +309,7 @@ def is_admin_authorized() -> bool:
     if not auth_header.startswith("Bearer "):
         return False
     token = auth_header[len("Bearer "):]
-    return hmac.compare_digest(token, ADMIN_TOKEN)
+    return token_matches(token, ADMIN_TOKEN)
 
 
 # -------------------------
