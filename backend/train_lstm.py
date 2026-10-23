@@ -24,6 +24,7 @@ os.environ["TF_DETERMINISTIC_OPS"] = "1"
 import numpy as np
 import pandas as pd
 import joblib
+import json
 import warnings
 from pathlib import Path
 warnings.filterwarnings("ignore")
@@ -219,6 +220,7 @@ def main():
     model_path = ARTIFACT_DIR / "best_lstm.keras"
     scaler_x_path = ARTIFACT_DIR / "scaler_X.pkl"
     scaler_y_path = ARTIFACT_DIR / "scaler_y.pkl"
+    metadata_path = ARTIFACT_DIR / "model_metadata.json"
     imp = train(build_improved(n_steps, n_features, n_out), data)
     i_val_rows, i_val_overall = evaluate(imp, data, scaler_y, "val")
     i_test_rows, i_test_overall = evaluate(imp, data, scaler_y, "test")
@@ -240,9 +242,13 @@ def main():
     selected.save(model_path)
     joblib.dump(scaler_X, scaler_x_path)
     joblib.dump(scaler_y, scaler_y_path)
+    metadata_path.write_text(
+        json.dumps({"precipitation_transform": "log1p"}, indent=2) + "\n",
+        encoding="utf-8",
+    )
     print(
         f"Saved validation-selected {model_path.name} + {scaler_x_path.name} "
-        f"+ {scaler_y_path.name} in {ARTIFACT_DIR}"
+        f"+ {scaler_y_path.name} + {metadata_path.name} in {ARTIFACT_DIR}"
     )
 
 if __name__ == "__main__":

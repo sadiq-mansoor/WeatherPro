@@ -82,7 +82,7 @@ Scalers (`MinMaxScaler`) are fit on the **training split only**. No test-set sta
 | temp_f | °F | Next-day air temperature |
 | humidity | % | Next-day relative humidity |
 | wind_speed | m/s | Next-day wind speed |
-| precip | mm | Log1p-transformed at training; expm1 applied at inference |
+| precip | mm | Controlled by `backend/model_metadata.json`; raw checked-in artifacts use raw mm, while new log1p-trained artifacts set `precipitation_transform` to `log1p` |
 
 ### Hyperparameters
 

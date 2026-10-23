@@ -1,6 +1,8 @@
 """Access control tests for the /api/admin/* endpoints."""
 
-TOKEN = "test-token"
+import os
+
+TOKEN = os.environ.get("ADMIN_TOKEN", "test-token")
 
 
 def auth(token):

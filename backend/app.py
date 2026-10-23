@@ -18,6 +18,7 @@ import logging
 import threading
 import time
 import tempfile
+import json
 from pathlib import Path
 
 from weather_utils import (
@@ -61,6 +62,7 @@ CORS(app, origins=_cors_origins or "*")
 MODEL_PATH = os.getenv("MODEL_PATH", str(BASE_DIR / "best_lstm.keras"))
 SCALER_X_PATH = os.getenv("SCALER_X_PATH", str(BASE_DIR / "scaler_X.pkl"))
 SCALER_Y_PATH = os.getenv("SCALER_Y_PATH", str(BASE_DIR / "scaler_y.pkl"))
+MODEL_METADATA_PATH = os.getenv("MODEL_METADATA_PATH", str(BASE_DIR / "model_metadata.json"))
 WINDOW_FILE = os.getenv("WINDOW_FILE", str(DATA_DIR / "window.npy"))
 HISTORY_FILE = os.getenv("HISTORY_FILE", str(DATA_DIR / "history.npy"))
 
@@ -130,6 +132,16 @@ if _missing:
 model = safe_load_model(MODEL_PATH)
 scaler_X = safe_load_scaler(SCALER_X_PATH)
 scaler_y = safe_load_scaler(SCALER_Y_PATH)
+
+try:
+    with open(MODEL_METADATA_PATH, encoding="utf-8") as metadata_file:
+        MODEL_METADATA = json.load(metadata_file)
+except (FileNotFoundError, OSError, ValueError):
+    # Older checked-in artifacts predict precipitation in raw millimetres.
+    # New training runs write metadata when they apply log1p.
+    MODEL_METADATA = {}
+
+PRECIPITATION_LOG1P = MODEL_METADATA.get("precipitation_transform") == "log1p"
 
 # -------------------------
 # Initialize window / history
@@ -238,8 +250,12 @@ def _parse_prediction(y_inv: np.ndarray) -> dict:
     pred_temp_f   = float(y0[0]) if y0.size > 0 else 0.0
     pred_humidity = float(y0[1]) if y0.size > 1 else 0.0
     pred_wind     = float(y0[2]) if y0.size > 2 else 0.0
-    # y0[3] is raw precip in mm (log1p-transformed at training, expm1 to recover).
-    pred_rain_mm  = float(np.expm1(max(y0[3], 0.0))) if y0.size > 3 else 0.0
+    pred_rain_value = float(y0[3]) if y0.size > 3 else 0.0
+    pred_rain_mm = (
+        float(np.expm1(max(pred_rain_value, 0.0)))
+        if PRECIPITATION_LOG1P
+        else max(pred_rain_value, 0.0)
+    )
 
     pred_humidity = min(max(pred_humidity, 0.0), 100.0)
     pred_wind = max(pred_wind, 0.0)

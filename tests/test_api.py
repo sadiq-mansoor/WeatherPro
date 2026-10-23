@@ -1,6 +1,12 @@
 """Endpoint tests for the public API surface."""
 
 
+import os
+
+
+TOKEN = os.environ.get("ADMIN_TOKEN", "test-token")
+
+
 def test_home_lists_endpoints(client):
     resp = client.get("/")
     assert resp.status_code == 200
@@ -58,7 +64,7 @@ def test_debug_predict_requires_admin_and_exposes_raw_output(client):
     assert unauthorized.status_code == 401
     body = client.get(
         "/debug_predict",
-        headers={"Authorization": "Bearer test-token"},
+        headers={"Authorization": f"Bearer {TOKEN}"},
     ).get_json()
     assert "prediction" in body
     assert "raw_model_output" in body

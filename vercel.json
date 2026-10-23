@@ -8,7 +8,8 @@
       "includeFiles": [
         "backend/best_lstm.keras",
         "backend/scaler_X.pkl",
-        "backend/scaler_y.pkl"
+        "backend/scaler_y.pkl",
+        "backend/model_metadata.json"
       ]
     }
   },
